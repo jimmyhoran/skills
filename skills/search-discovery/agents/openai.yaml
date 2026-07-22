@@ -1,0 +1,4 @@
+interface:
+  display_name: "Search Discovery"
+  short_description: "Refresh search discovery and indexing"
+  default_prompt: "Use $search-discovery to prepare my changed URLs for search discovery."
