@@ -107,10 +107,10 @@ See the current [`gh skill` manual](https://cli.github.com/manual/gh_skill) befo
 
 #### [feeling-first-design](./skills/feeling-first-design/SKILL.md)
 
-**Promise:** Turn a consumer-product moment into an ethical, testable design treatment built around the feelings that should drive adoption.
+**Promise:** Turn evidence about a consumer-product moment into an ethical, testable intervention for one useful emotional state shift.
 
 - **Try:** `Use feeling-first-design to make our first-run budgeting flow feel safer and more motivating.`
-- **Expected output:** The moment and journey stage, three target feelings, selected behavioral levers, a concrete product move, an experiment and metric, and a dark-pattern check.
+- **Expected output:** The moment and evidence, one state-shift hypothesis with confidence, the smallest fitting intervention, a behavioral and user-reported test, guardrails, a stop condition, and an agency review.
 - **Needs:** A product or flow, its audience, and the behavior or outcome being considered. Existing research or metrics help but are not required; no account or companion skill is required.
 - **External writes:** None by default. It recommends experiments; it does not change the product or launch a test.
 - **Support:** Installable; repository checks validate its package, but there is no automated behavioral certification across agents.
