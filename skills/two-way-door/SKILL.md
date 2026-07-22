@@ -1,9 +1,9 @@
 ---
 name: two-way-door
-description: Evaluate decisions using Jeff Bezos's two-way door framework. Rate each decision on a 1-5 reversibility scale (1 = pure two-way door, easily undone; 5 = pure one-way door, irreversible or very costly to reverse), with brief justification and recommended deliberation depth. Use when the user is weighing a choice, comparing options, or framing something as a decision. Trigger phrases include 'should I', 'thinking about', 'considering', 'deciding', 'going with', 'picking between', 'leaning toward', 'is it worth', 'commit to', 'about to'. If the context contains multiple distinct decisions, evaluate each separately. Apply proactively when a decision's reversibility would meaningfully change how much deliberation it warrants, especially in product, architecture, hiring, public commitments, brand, regulatory, and contractual contexts.
+description: Evaluate a decision using Jeff Bezos's two-way door framework, score its reversibility from 1 to 5, explain the binding cost or blast-radius constraint, and recommend proportionate deliberation. Use when someone is weighing options or approaching a consequential product, architecture, hiring, public brand, regulatory, or contractual commitment. Score distinct decisions separately when the context contains more than one choice.
+license: MIT
 metadata:
   author: Jimmy Horan
-  version: "1.0"
 ---
 
 # Two-Way Door
@@ -12,7 +12,9 @@ A reversibility analyser. When the user is making a decision, score how reversib
 
 ## Core principle
 
-From Bezos's 1997 shareholder letter: most decisions are two-way doors. You can walk through, see what's on the other side, and walk back if you don't like it. These should be made fast, by small teams or individuals. One-way doors are decisions you can't reverse, or can only reverse at huge cost. These deserve slow, careful analysis.
+From Bezos's [2015 shareholder letter](https://ir.aboutamazon.com/files/doc_financials/annual/2015-Letter-to-Shareholders.PDF): most decisions are two-way doors. You can walk through, see what's on the other side, and walk back if you don't like it. These should be made fast, by small teams or individuals. One-way doors are decisions you can't reverse, or can only reverse at huge cost. These deserve slow, careful analysis.
+
+The 1-5 scale below is this skill's operational extension of Bezos's binary framework; it does not appear in the source letter.
 
 The two most common decision-making mistakes:
 

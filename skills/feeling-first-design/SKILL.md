@@ -1,18 +1,18 @@
 ---
 name: feeling-first-design
 description: Design or critique a consumer-app feature so users adopt it because of how it makes them feel, not just what it does. Runs an emotional-design lens (name the three target feelings), pulls the right behavioral-psychology levers for that moment in the journey, turns each into a testable experiment with a metric, and screens for the dark-pattern trap. Use when the user is designing, redesigning, or reviewing a consumer-facing flow — onboarding, activation, retention, engagement, habit, growth/viral, monetization, conversion, trust, or premium positioning — or says things like 'make this feature stickier', 'why won't users adopt this', 'design the onboarding', 'this flow feels flat', 'add a growth loop', 'behavioral design', 'emotional design', or 'what psychological lever fits here'.
+license: MIT
 metadata:
   author: Jimmy Horan
-  version: "1.0"
 ---
 
 # Feeling-First Design
 
-A behavioral-design method for consumer apps. Function is table stakes; the apps that get adopted instantly engineer a *feeling* at each step. This skill takes a moment in the product and produces a treatment: the target emotion, the psychological lever that triggers it, the experiment that tests it, the metric that proves it, and the trap that would make it a dark pattern.
+A behavioral-design method for consumer apps. Product adoption can be shaped by the feeling around a task as well as by the function itself. This skill takes a moment in the product and produces a treatment: the target emotion, the psychological lever that may influence it, the experiment that tests the idea, the metric that evaluates it, and the trap that would make it a dark pattern.
 
 ## Core principle
 
-Good products solve the task. The best products shape the feeling around it. Users return to Duolingo to feel *disciplined*, to Strava to feel *athletic*, to Airbnb to feel *adventurous* — the function is the excuse, the feeling is the reason. So design backwards from emotion: decide what a flow should make the user *feel*, then choose the mechanic that produces it. Designing from named psychological principles beats guessing, and beats copying a competitor's surface without knowing why it works.
+Good products solve the task; strong products also consider the feeling around it. As an ideation exercise, a team might hypothesize that Duolingo can make practice feel *disciplined*, Strava can make activity feel *athletic*, or Airbnb can make planning feel *adventurous*. These are hypotheses to test with users, not claims about why everyone returns. Design backwards from a target emotion, choose a mechanic that might support it, and validate the result instead of copying a competitor's surface.
 
 This is a lens and a lever set, not a checklist to run top-to-bottom. Pull the one or two levers that fit the moment; most of them interlink, so the leverage is in the pairings.
 
@@ -53,12 +53,12 @@ Each lever is a named, public behavioral principle and the moment it fits. Pick 
 - **Labor Illusion** (Norton & Buell) — narrate the invisible work ("scanning 1,243 items…") so the result feels earned, not cheap. → Credibility Borrow
 - **Progressive Disclosure** (Sweller, cognitive load) — reveal complexity only as the user is ready; default the smart choice; one concept per screen.
 - **Micro-Commitment Ladder** (Cialdini, commitment & consistency) — chain tiny escalating yeses instead of one big ask; bank each visibly. → Goal Mirror
-- **Aha Shortcut** (time-to-value) — find your magic-moment threshold (Facebook's *7 friends in 10 days*), then delete everything between signup and it.
+- **Aha Shortcut** (time-to-value) — use product evidence to identify an activation threshold, then remove unnecessary steps between signup and that first value. Do not borrow another product's anecdotal metric as though it were universal.
 - **Reciprocity Primer** (Cialdini/Gouldner) — give one real, free insight *before* the costly ask; the gift earns the ask. → Curiosity Gap
 - **Goal Mirror** (self-reference + commitment) — ask the user's goal in their words, reflect it back across the next screens.
 
 **Retention, Engagement & Habit**
-- **Variable Reward** (Skinner, variable-ratio; Eyal) — vary the *magnitude/form* of a genuine payoff; dopamine spikes on anticipation. Never vary facts, only insights.
+- **Variable Reward** (Skinner, variable-ratio; Eyal) — test varying the *magnitude or form* of a genuine payoff where that variation serves the user. Never vary facts, only insights, and do not substitute a broad dopamine claim for product evidence.
 - **Return Trigger** (Eyal, trigger→action) — fire the external nudge on the user's *internal* state (a routine, an event, a threshold), so it lands as help, not noise.
 - **Zeigarnik Open Loop** — leave something genuinely, visibly incomplete ("2 of 3 done") so the mind wants to close it. → Return Trigger, Endowed Progress
 - **Curiosity Gap** (Loewenstein, information gap) — lead with the question, not the answer; make the reveal worth the tap *every time*.
@@ -79,7 +79,7 @@ Each lever is a named, public behavioral principle and the moment it fits. Pick 
 - **Earned Upgrade Moment** (contextual paywall) — surface the upgrade at the instant the user hits the value ceiling, showing the specific thing they'll unlock.
 - **Reverse Trial** (endowment + loss aversion) — give full premium up front, then let them keep it; downgrading feels like a loss.
 - **Anchor & Decoy** (Tversky/Kahneman; Ariely) — high anchor first, target plan as the obvious value; keep anchors honest.
-- **Loss-Framed Nudge** (prospect theory) — frame the *real* cost of inaction; losses loom ~2× gains. Only for losses that genuinely exist.
+- **Loss-Framed Nudge** (prospect theory) — frame the *real* cost of inaction when it matters. Loss aversion varies by context, so do not assume a fixed multiplier or manufacture a loss that does not exist.
 - **Friction Audit** (Hick's Law) — cut every non-essential field/step from a conversion flow; defer, default, pre-fill.
 - **Identity Upgrade** (self-signaling) — sell the *person the user becomes*, backed by features — not a feature checklist.
 - **Exclusivity Frame** (scarcity) — give premium a genuine membership feel; real selectivity, never fabricated countdowns.
@@ -141,4 +141,4 @@ Scale depth to the ask. A single "make this stickier" earns one lever and its tr
 
 ## Provenance
 
-The *system* here — the emotional-design lens, the 12-stack journey, the card/lever method, and the metrics-and-diagnosis layers — is modelled on the structure of Bartek Marzec's paid "Product Design Playbook" ([consumerapp.studio](https://www.consumerapp.studio/)). The lever bodies are original and grounded in named, public behavioral research (Cialdini, Kahneman & Tversky, Eyal, Fogg, Duhigg, Clear, Berger, Thaler & Sunstein, Ariely, Loewenstein, Nunes & Drèze, Norton & Buell, Norman/Tractinsky); nothing is copied from the paywalled product. The "craft as the wedge in crowded categories" note reflects a complementary design-differentiation thesis (Satya / Kree8, [@heysatya_](https://x.com/heysatya_)).
+The overall arrangement — the emotional-design lens, 12-stage journey, lever cards, and metric-and-diagnosis layers — was influenced by Bartek Marzec's paid [Product Design Playbook](https://www.consumerapp.studio/). The lever descriptions were written for this skill and draw on named behavioral research. Representative primary sources include Buell and Norton's [labor-illusion research](https://doi.org/10.1287/mnsc.1110.1376), Fogg's [behavior model](https://doi.org/10.1145/1541948.1541999), Loewenstein's [information-gap account of curiosity](https://doi.org/10.1037/0033-2909.116.1.75), and Nunes and Drèze's [endowed-progress research](https://doi.org/10.1086/500480). The closing note about craft as differentiation reflects public commentary by Satya and Kree8 ([Kree8](https://www.kree8.studio/), [@heysatya_](https://x.com/heysatya_)). This note records known influences; it is not a legal-clearance determination.
