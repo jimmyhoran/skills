@@ -1,0 +1,4 @@
+interface:
+  display_name: "Map Citation Opportunities"
+  short_description: "Map attainable AI citation and backlink targets"
+  default_prompt: "Use $map-citation-opportunities to find and rank the third-party sources this product should target for buyer-intent queries."
