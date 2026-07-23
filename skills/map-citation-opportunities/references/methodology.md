@@ -2,6 +2,8 @@
 
 Use this reference to design a defensible audit, explain its limits, or revise the scoring model. Keep live platform facts in the opportunity tracker with an observation date rather than hard-coding a directory catalog here.
 
+**Source review:** Last reviewed 2026-07-22. Re-check the linked first-party platform and policy documentation before relying on it; AI-search surfaces, access, and rules are volatile.
+
 ## Evidence behind the method
 
 - [Perplexity's product documentation](https://www.perplexity.ai/help-center/en/articles/10352895-how-does-perplexity-work) says it searches the web in real time and exposes citations. Treat those citations as observable evidence, not as a stable ranking report.

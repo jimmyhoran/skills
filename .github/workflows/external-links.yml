@@ -1,0 +1,41 @@
+name: External link health
+
+on:
+  schedule:
+    - cron: "17 3 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: external-link-health-main
+  cancel-in-progress: true
+
+jobs:
+  links:
+    name: Check trusted main links
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out trusted main
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: refs/heads/main
+          persist-credentials: false
+
+      - name: Check bounded public HTTPS links
+        id: links
+        continue-on-error: true
+        run: python3 scripts/check-external-links.py
+
+      - name: Report non-blocking result
+        env:
+          LINK_RESULT: ${{ steps.links.outcome }}
+        run: |
+          if [ "$LINK_RESULT" != "success" ]; then
+            echo "::warning::One or more external links could not be verified."
+          else
+            echo "External links passed the bounded health check."
+          fi

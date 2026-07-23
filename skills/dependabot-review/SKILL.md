@@ -1,9 +1,10 @@
 ---
 name: dependabot-review
 description: Review and merge a batch of open Dependabot dependency-update PRs one by one — reason about every dependency change, read the CI checks and the supply-chain/vulnerability scan reports (Socket) rather than trusting the green tick, triage and fix failing checks, then merge in a conflict-minimizing order while handling Dependabot's rebase/recreate behavior and any review-bot comments. Use when the user wants to work through their Dependabot PRs and says things like 'go through the dependabot PRs', 'review and merge the dependabot (or dependebot) PRs', 'clear the dependency update PRs', 'merge the dependency bumps', 'check the socket / vulnerability reports on the dep PRs', 'handle the weekly dependency updates', or 'are the dependabot PRs safe to merge'. Covers grouped and individual bumps across ecosystems (bun/npm, docker, github-actions, pulumi/infra) and any repo using the `gh` CLI.
+license: MIT
+compatibility: Requires git, an authenticated GitHub CLI (`gh`), network access, and permission to read checks and comments and to update or merge pull requests. Lockfile fixes may also require the repository's package manager and runtime.
 metadata:
   author: Jimmy Horan
-  version: "1.0"
 ---
 
 # Dependabot Review & Merge
@@ -32,28 +33,30 @@ List them for the user, then process each. Note which touch a **shared lockfile*
 
 ## 2 — Gather state per PR
 
-For each PR pull, in parallel: CI checks, issue comments, review comments, changed files, the body, and the *direct-dependency* diff.
+For each PR pull, in parallel: CI checks, issue comments, submitted reviews, inline review comments, changed files, the body, and the *direct-dependency* diff. A submitted review summary does not include its inline comments, so retrieve those separately.
 
 ```bash
 gh pr checks <n>                         # per-check pass/fail/pending/skipping
 gh pr view <n> --json comments --jq '.comments[] | "[\(.author.login)] \(.body)"'
 gh pr view <n> --json reviews  --jq '.reviews[]  | "[\(.author.login)] \(.state) \(.body)"'
+gh api --paginate 'repos/{owner}/{repo}/pulls/<n>/comments' \
+  --jq '.[] | "[\(.user.login)] \(.path):\(.line // .original_line) \(.body)"'
 gh pr view <n> --json files    --jq '.files[] | "\(.additions)+ \(.deletions)- \(.path)"'
 gh pr view <n> --json body     --jq '.body'   # Dependabot's release-notes/compat summary
 ```
 
-The signal is in the **package.json / manifest** lines, not the lockfile. Extract just the direct-dependency changes:
+The direct-dependency signal is in the ecosystem's manifest or pinning file, not in generated lockfile churn. Use the changed-file list to identify the relevant source of truth—such as `package.json`, `pyproject.toml`, `Cargo.toml`, `go.mod`, a Dockerfile, an infrastructure manifest, or `.github/workflows/*.yml`—then inspect those exact diff hunks. Do not treat the `package.json` shortcut as universal.
 
 ```bash
-gh pr diff <n> --patch | awk '/^diff --git/{p=($0~/package\.json/)} p&&/^[+-]/&&!/^[+-][+-]/&&/"/{print}'
+gh pr diff <n> --patch
 ```
 
 ## 3 — Reason about the changes
 
 For each bump, form a real opinion — don't just note the version delta:
 
-- **Direct vs transitive.** A scary-looking major bump in the lockfile (e.g. OpenTelemetry 1.x→2.x) may be purely transitive. Grep the source for direct imports (`grep -rn "@scope/pkg" apps packages --include=*.ts`). Zero direct imports + a stable peer range + green typecheck = invisible to your code.
-- **Semver reality.** Patch/minor within an existing major is low-risk. A major bump, or any `0.x` minor, can break — read the release notes in the PR body.
+- **Direct vs transitive.** A scary-looking major bump in the lockfile (e.g. OpenTelemetry 1.x→2.x) may be purely transitive. Search the source for package references (`rg --fixed-strings '@scope/pkg' apps packages`) and inspect the matches. No direct imports, a stable peer range, and a green typecheck are evidence of lower exposure, not proof that the change is invisible.
+- **Semver reality.** Patch/minor within an existing major is usually lower-risk, but release mistakes and behavior changes still happen. A major bump, or any `0.x` minor, deserves extra scrutiny — read the release notes and relevant package diff.
 - **Known couplings** (project-specific — learn them). Some packages must move together or the build breaks: validation stacks (zod ↔ its hono/env adapters), SDK-pinned ecosystems (React pinned by the Expo SDK — bump the SDK first), tooling pinned to a runtime (a vendored ts-node needing an older TypeScript). If the PR bumps one side of a coupling without the other, that's a red flag even if checks pass. Confirm the coupled package is unchanged or co-bumped.
 - **Is "checks pass" enough evidence?** For type/behavior breaks, typecheck + tests + build are strong evidence. For runtime-only behavior with no coverage, they aren't — say so.
 
@@ -73,8 +76,8 @@ gh pr view <n> --json comments \
 
 Reason about each alert instead of reflexively accepting or blocking:
 
-- **Vulnerability score.** `Vulnerability => 100` means no known CVEs. That's the number the user actually cares about. Low **Supply-Chain-Security** scores (60s–70s) on large packages (pulumi, expo, otel) are scorecards, not alerts.
-- **"Obfuscated code" is usually a false positive.** Official/popular SDKs that ship **minified/bundled dist** (e.g. `@elevenlabs/elevenlabs-js`, `jiti`) trip the heuristic. Confirm it's a false positive by checking: is the package **already in the tree** (`grep '"pkg@' <lockfile>`)? Is it an approved/official publisher? Is only the version changing (so the trait predates this bump)? If yes to those → accept and note it.
+- **Vulnerability score.** `Vulnerability => 100` means no known CVEs; it is one useful signal, not a complete supply-chain verdict. Low **Supply-Chain-Security** scores (60s–70s) on large packages (pulumi, expo, otel) are scorecards, not alerts, but any specific warning still needs investigation.
+- **"Obfuscated code" may be a bundling false positive, but it is unresolved until investigated.** Existing use, an official-looking publisher, and a version-only bump do not prove that a new release is safe; publishers and release pipelines can be compromised. Compare the old and new package or release artifacts, verify publisher and repository provenance, inspect newly added install scripts and native/network/shell behavior, and reconcile the scanner's exact evidence. Accept only when that comparison explains the alert without a material new risk; otherwise block the merge and escalate.
 - **Real blockers** — actual malware, protestware, a package that newly added an install script or network/shell access, a brand-new author on a package, a typosquat — do **not** merge. Escalate to the user.
 - **No scanner comment** on a docker/github-actions PR is expected (it scans package deps, not image tags).
 
@@ -82,7 +85,7 @@ State your verdict per flagged package: *real vuln / real supply-chain risk / fa
 
 ## 5 — Check for review-bot comments
 
-Beyond the scanner, look for code-review bots (Cursor "bugbot", CodeRabbit, etc.) in both the checks list and the comments. They may not be installed — **verify and say so** ("no bugbot configured on this repo") rather than silently skipping. If one left a comment, read it and address anything legitimate before merging.
+Beyond the scanner, look for code-review bots (Cursor "bugbot", CodeRabbit, etc.) in the checks, issue comments, submitted reviews, and inline review comments gathered above. They may not be installed — **verify and say so** ("no bugbot configured on this repo") rather than silently skipping. If one left a finding, read it and address anything legitimate before merging.
 
 ## 6 — Triage and fix failing checks
 
@@ -124,8 +127,9 @@ When a trailing PR conflicts (almost always **only in the lockfile**), you have 
   ```bash
   gh pr checkout <n>                 # or: git fetch origin refs/pull/<n>/head && git checkout -B fix FETCH_HEAD
   git merge origin/main --no-edit    # conflicts, typically just the lockfile
-  git checkout origin/main -- bun.lock && <pkg-manager> install   # regenerate against merged manifests
-  git add bun.lock && git commit --no-edit
+  git checkout origin/main -- <lockfile>
+  <package-manager-install-command>            # regenerate against merged manifests
+  git add <manifest> <lockfile> && git commit --no-edit
   ```
   Verify the regenerated lockfile kept **both** sides (spot-check a dep from each PR), run `typecheck` locally, then push (non-force).
 - **Fixing a PR + resolving in one go** (the linter-bump case). Prefer building on **Dependabot's latest rebased head** so its clean lockfile wins: `git checkout -B fix <dependabot-head>` then `git cherry-pick <your-fix-commit>`. Push non-force.
@@ -152,7 +156,6 @@ After the last merge:
 - **Merging to `main` is significant and semi-irreversible.** Proceed on the user's explicit "merge them" (this workflow is that authorization), but don't invent scope — merge the dependency PRs, not unrelated open work.
 - **Never `git push --force`** to a shared/Dependabot branch without explicit confirmation. Every technique above is non-force.
 - **Merging often auto-deploys.** If merge-to-`main` triggers infra/image deploys, flag it — and note when a resulting deploy failure is a pre-existing/known-broken condition rather than something the bumps caused. Check that none of the PRs carry DB migrations before merging a batch unattended.
-- **Record durable, non-obvious gotchas** you hit (a tool's schema-coupling, Dependabot's recreate behavior, a scanner false-positive pattern) to memory so the next sweep is faster.
 
 ## Output
 

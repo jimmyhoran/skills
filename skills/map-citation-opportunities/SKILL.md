@@ -1,6 +1,11 @@
 ---
 name: map-citation-opportunities
 description: Discover, verify, and rank legitimate third-party listing, review, editorial, community, integration, and owned-content opportunities by auditing live sources and brand recommendations for buyer-intent queries across AI search engines. Use when the user asks which Perplexity, ChatGPT, or Google AI citations to target, why competitors appear in "best" or comparison answers, where citation evidence suggests earning backlinks or brand mentions, or for a repeatable off-site AI-visibility map. Works for consumer, B2B, developer, local, marketplace, and mixed products. Do not use merely to execute an already-chosen directory list or optimize owned pages without a source audit; use directory-submissions or ai-seo for those tasks.
+license: MIT
+compatibility: Requires network and web-search access. Cross-surface citation checks may require authorized access to ChatGPT, Perplexity, or Google AI experiences; do not incur paid usage or bypass access controls.
+metadata:
+  author: Jimmy Horan
+  last-reviewed: "2026-07-22"
 ---
 
 # Map Citation Opportunities
@@ -8,6 +13,8 @@ description: Discover, verify, and rank legitimate third-party listing, review, 
 Turn a sample of live AI-search answers into an evidence-backed opportunity backlog. Map where buyers and engines currently obtain information, then identify legitimate ways for the product to become present there.
 
 Do not treat a citation panel as a submission list. A source can be cited without mentioning the brand, and a brand can be mentioned without being recommended.
+
+**Freshness:** Platform behavior and policy sources were last reviewed on 2026-07-22. Re-check the linked first-party [Perplexity](https://www.perplexity.ai/help-center/en/articles/10352895-how-does-perplexity-work), [OpenAI](https://help.openai.com/en/articles/9237897), and [Google](https://developers.google.com/search/docs/fundamentals/ai-optimization-guide) guidance before each audit; interfaces, access, and retrieval behavior can change without notice.
 
 ## Set the scope
 

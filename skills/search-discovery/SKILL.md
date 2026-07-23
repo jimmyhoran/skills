@@ -1,11 +1,18 @@
 ---
 name: search-discovery
-description: Prepare a new, changed, moved, or deleted website URL for discovery by search engines and AI answer engines. Use when the user asks to get a site or page indexed, request a recrawl or refetch, submit a URL to Brave, Google, or Bing, set up IndexNow, update or validate a sitemap, diagnose a page missing from search, or launch a newly published website. Check indexability and sitemap integrity before submitting, use each engine's current official route, and report submissions as requests rather than guaranteed indexing.
+description: Prepare a new, changed, moved, or deleted website URL for discovery by search engines and AI answer engines. Use when the user asks to get a site or page indexed, request a recrawl or refetch, submit a URL to Brave, Google, or Bing, set up IndexNow, update or validate a sitemap, diagnose a page missing from search, or launch a newly published website. Check indexability and sitemap integrity before acting, follow each engine's current official discovery or submission guidance, and report submissions as requests rather than guaranteed indexing.
+license: MIT
+compatibility: Requires network access. Submission steps may require an authorized Google Search Console or Bing Webmaster Tools account and permission to update the target site's sitemap, robots.txt, or IndexNow key.
+metadata:
+  author: Jimmy Horan
+  last-reviewed: "2026-07-22"
 ---
 
 # Search Discovery
 
 Make a page easy for search engines to find and recrawl. Submission is the final nudge, not a substitute for a crawlable, canonical, internally linked page.
+
+**Freshness:** Engine routes and crawler policies were last reviewed on 2026-07-22. Re-check the linked first-party documentation at execution time because product flows, quotas, endpoints, and crawler behavior change.
 
 ## Determine the change set
 
@@ -50,10 +57,11 @@ Check the official documentation at execution time. Product flows, endpoints, qu
 | Service | Preferred action | Notes |
 | --- | --- | --- |
 | Brave Search | Open [Submit URL](https://search.brave.com/submit-url) and submit the canonical URL. | Manual discovery request; record that it was submitted. |
-| Google Search | In the owned property, inspect the canonical URL in Search Console, run **Test live URL** where appropriate, then choose **Request indexing**. Submit the sitemap for many URLs. | This is a request with a quota, not an indexing guarantee. Do not use Google's Indexing API for ordinary web pages. |
-| Bing | Prefer [IndexNow](https://www.indexnow.org/documentation) for URLs published, updated, moved, or deleted. Use Bing Webmaster Tools' manual URL submission only for a small fallback set. | Verify domain ownership/key placement before sending URLs. Send only changed URLs. |
-| DuckDuckGo | Do not present Bing or IndexNow submission as a DuckDuckGo submission. Check DuckDuckGo's current official webmaster guidance before claiming a direct route exists. | Maintain ordinary crawlability, sitemap accuracy, and Bing coverage. |
-| Perplexity | Do not invent a submit or refetch endpoint. Check Perplexity's current crawler/publisher documentation before taking action. | Make public pages crawlable and use normal search-discovery signals. |
+| Google Search | Follow Google's [recrawl guidance](https://developers.google.com/search/docs/crawling-indexing/ask-google-to-recrawl): inspect the canonical URL in the owned Search Console property, run **Test live URL** where appropriate, then choose **Request indexing**. Submit the sitemap for many URLs. | This is a request with a quota, not an indexing guarantee. Do not use Google's Indexing API for ordinary web pages. |
+| Bing | Prefer [IndexNow](https://www.indexnow.org/documentation) for URLs published, updated, moved, or deleted. Use [Bing Webmaster Tools' URL Submission](https://www.bing.com/webmasters/help/url-submission-62f2860b) only for a small fallback set. | Verify domain ownership/key placement before sending URLs. Send only changed URLs. |
+| ChatGPT Search | Follow OpenAI's [publisher guidance](https://help.openai.com/en/articles/12627856-publishers-and-developers-faq) and allow `OAI-SearchBot` where inclusion is intended. | There is no manual indexing request in the cited guidance; do not invent one or conflate `OAI-SearchBot` with `GPTBot`. |
+| DuckDuckGo | Do not present Bing or IndexNow submission as a DuckDuckGo submission. Check DuckDuckGo's current [source](https://duckduckgo.com/duckduckgo-help-pages/results/sources) and [crawler](https://duckduckgo.com/duckduckgo-help-pages/results/duckduckbot) guidance before claiming a direct route exists. | Maintain ordinary crawlability and sitemap accuracy; treat Bing as one source, not a DuckDuckGo submission endpoint. |
+| Perplexity | Do not invent a submit or refetch endpoint. Check Perplexity's current [crawler policy](https://www.perplexity.ai/help-center/en/articles/10354969-how-does-perplexity-follow-robots-txt) before taking action. | Make public pages crawlable and use normal search-discovery signals. |
 
 Never say a page "will come up in search" after submission. Say it was requested or notified. Indexing and ranking remain each service's decision.
 

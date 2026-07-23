@@ -1,9 +1,10 @@
 ---
 name: funnel-teardown
 description: Tear down a competitor's (or your own) complete offer — funnel, landing page, lead magnet, upsell path, pricing strategy, emails, and CTAs — then connect the dots into four answers, why people buy, where people drop off, what's missing, and where money is being left on the table. Use when the user wants to analyze a competitor's funnel or offer, shares a competitor's landing page, pricing page, or email sequence and asks what's working, or says things like 'tear down this funnel', 'funnel audit', 'offer teardown', 'why do people buy from them', 'where are they leaving money on the table', 'what can I steal from their funnel', or 'find the gaps in this offer'.
+license: MIT
+compatibility: Requires network and web-browser access to inspect live funnels. Gated steps may require user-provided screenshots or emails, or authorized account access supplied by the user.
 metadata:
   author: Jimmy Horan
-  version: "1.0"
 ---
 
 # Funnel Teardown

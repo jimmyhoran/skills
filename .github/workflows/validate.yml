@@ -1,0 +1,76 @@
+name: Public skills validation
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: public-skills-validation-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Validate repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out candidate tree
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          path: candidate
+          persist-credentials: false
+
+      - name: Check out trusted validator from the PR base
+        if: github.event_name == 'pull_request'
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          path: trusted
+          persist-credentials: false
+
+      # One-time bootstrap for this workflow's first owner-authored PR. The
+      # immutable pre-CI base SHA makes the exception permanently false after
+      # the first merge; every other PR must use the trusted base checkout.
+      - name: Bootstrap validation for the initial owner PR
+        if: >-
+          github.event_name == 'pull_request' &&
+          github.event.pull_request.base.sha == '3c58d4c808b44e4eed04ed84d5ef5cc771c90dd9' &&
+          github.event.pull_request.author_association == 'OWNER'
+        working-directory: candidate
+        run: ./scripts/validate.sh --skip-linker
+
+      - name: Validate untrusted proposal as data
+        if: >-
+          github.event_name == 'pull_request' &&
+          (github.event.pull_request.base.sha != '3c58d4c808b44e4eed04ed84d5ef5cc771c90dd9' ||
+          github.event.pull_request.author_association != 'OWNER')
+        working-directory: trusted
+        run: ./scripts/validate.sh --repo-root "$GITHUB_WORKSPACE/candidate" --skip-linker
+
+      - name: Validate trusted tree and linker behavior
+        if: github.event_name != 'pull_request'
+        working-directory: candidate
+        run: ./scripts/validate.sh
+
+  aggregate:
+    name: Public skills validation (required)
+    if: ${{ always() }}
+    needs: [validate]
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Require every validation job to pass
+        env:
+          VALIDATE_RESULT: ${{ needs.validate.result }}
+        run: |
+          if [ "$VALIDATE_RESULT" != "success" ]; then
+            echo "Repository validation result: $VALIDATE_RESULT" >&2
+            exit 1
+          fi
+          echo "All required repository validation passed."
