@@ -127,6 +127,16 @@ See the current [`gh skill` manual](https://cli.github.com/manual/gh_skill) befo
 - **External writes:** This is an execution workflow. When the user explicitly asks it to merge, it may comment on PRs, push non-force fixes, merge and delete branches, and thereby trigger deployments. Review-only requests do not authorize those writes.
 - **Support:** Installable; repository checks validate its package, but its authenticated, repository-specific behavior is not covered by an automated end-to-end test.
 
+#### [worktree-cleanup](./skills/worktree-cleanup/SKILL.md)
+
+**Promise:** Close out a finished worktree: confirm its work is merged and nothing is left undone, update the issues tied to it, stop what it is still running, and remove it. It asks before doing anything that could lose work.
+
+- **Try:** `Use worktree-cleanup. The PR merged, so close everything out and tear down this worktree.`
+- **Expected output:** An audit of merge state, unfinished work, and tracker state; one question per unresolved item with a recommended option; then the tracker updates and shell cleanup it performed, and a final report written before the worktree is removed.
+- **Needs:** A local Git worktree and `git`, plus an authenticated [`gh`](https://cli.github.com/) session for pull-request and issue state. Orca-managed worktrees use the [Orca](https://onorca.dev/) CLI; other worktrees fall back to `git worktree`. [fp](https://fp.dev/), Linear (through Orca or a Linear MCP server), and GitHub Issues are checked only when the project already uses them. A structured question tool such as Claude Code's AskUserQuestion is preferred; otherwise it asks in plain text. No companion skill is required.
+- **External writes:** Invoking it authorizes three things: updating or closing tracker items whose work it verified as merged, stopping shells and dev servers the worktree owns, and removing the worktree once nothing is unresolved (running the repository's Orca archive hook when Orca manages it). It commits, pushes, merges, closes a PR, discards changes, deletes an unmerged branch, creates follow-up issues, or stops another agent only when the user picks that option.
+- **Support:** Installable; repository checks validate its package. Its command syntax was checked against the Orca 1.4 and fp 0.24 CLI references in November 2026, but no automated end-to-end test covers a real teardown.
+
 ### Understand and grow distribution
 
 #### [funnel-teardown](./skills/funnel-teardown/SKILL.md)
