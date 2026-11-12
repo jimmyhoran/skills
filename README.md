@@ -115,6 +115,16 @@ See the current [`gh skill` manual](https://cli.github.com/manual/gh_skill) befo
 - **External writes:** None by default. It recommends experiments; it does not change the product or launch a test.
 - **Support:** Installable; repository checks validate its package, but there is no automated behavioral certification across agents.
 
+#### [backlog-triage](./skills/backlog-triage/SKILL.md)
+
+**Promise:** Read your whole backlog in whatever tracker you use, then get the 10 issues to act on now and the 10 to close, merge, revise, split, or delete, with evidence for each. Built to run daily or weekly.
+
+- **Try:** `Use backlog-triage on our Linear backlog for this week. We're focused on onboarding.`
+- **Expected output:** Coverage and backlog-health lines, a ranked act-now table (why now, next action, effort, owner), a prune table (action, evidence, confidence), and a numbered list of proposed tracker changes. A list comes back shorter only when fewer issues qualify, and the report says why.
+- **Needs:** Read access to the tracker through a connected MCP server (preferred), its CLI, or its API: for example [fp](https://fp.dev/), an authenticated [`gh`](https://cli.github.com/) session for GitHub Issues, or the official Linear or Trello MCP server. Other trackers work through their own MCP server, CLI, API, or an export you provide. `jq` helps with large backlogs. A structured question tool such as Claude Code's AskUserQuestion is preferred for approval; otherwise it asks in plain text. No companion skill is required.
+- **External writes:** None until you approve. It then applies only the changes you chose: priority, order, labels, status, comments, closing or merging duplicates, and revising or splitting issues. Deletion needs a separate confirmation naming each item. A request that already says to apply the changes covers everything except deletion, and unattended runs only report.
+- **Support:** Installable; repository checks validate its package. Its fp and GitHub CLI commands were checked against fp 0.24 and gh 2.95 in November 2026, and its Linear, Trello, and Jira access notes against their official documentation; no automated end-to-end test covers a real backlog.
+
 ### Run engineering operations
 
 #### [dependabot-review](./skills/dependabot-review/SKILL.md)
