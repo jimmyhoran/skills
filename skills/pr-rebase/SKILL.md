@@ -16,7 +16,7 @@ The loop is **capture → rebase → audit → review → verify → push → wa
 
 ## Ground rules
 
-- **Invoking this skill authorizes** rewriting the local branch, force-pushing it to the PR's own head branch with the exact lease in step 6, pushing fixes for failures this rebase caused, and rerunning a failed CI job once. A local-only request stops before step 6, and a dry run changes nothing and stops at the end of step 1's preview.
+- **Invoking this skill authorizes** rewriting the local branch, force-pushing it to the PR's own head branch with the exact lease in step 6, pushing fixes for failures this rebase caused, and rerunning a failed CI job once. A local-only request skips steps 6 and 7 but still reports, and a dry run changes nothing and stops at the end of step 1's preview.
 - **Everything else needs the user's pick:** overwriting commits you do not have, rewriting another author's commits, running code from a fork, merging, changing the PR's base, rebasing PRs stacked on this one, or bypassing a hook, required check, or branch protection.
 - **Never use plain `--force` or `--no-verify`.**
 - **Test only in local or disposable environments.** Never touch production data, real customers, live payments, or real email or SMS.
@@ -40,10 +40,10 @@ gh pr list --base <head-branch> --json number,url   # PRs stacked on this one. S
 
 Name these for the rest of the run: `<n>` (PR number), `<base>`, `<head-branch>`, `<branch>` (the local branch), `<base-remote>` (the remote for the PR's repository, usually `origin`, or `upstream` on a fork), and `<head-remote>` (the remote for its head repository).
 
-**No PR?** Set `<base>` with `git symbolic-ref --short refs/remotes/origin/HEAD | sed 's|^origin/||'` unless the branch clearly started elsewhere, and skip the `gh` commands and step 7. Then take one path:
+**No PR?** Use `origin` as `<base-remote>`, set `<base>` with `git symbolic-ref --short refs/remotes/origin/HEAD | sed 's|^origin/||'` unless the branch clearly started elsewhere, and skip the `gh` commands and step 7. Then take one path:
 
-- **Force-push allowed:** the branch's upstream is neither the base nor the default branch, and the user confirms force-pushing to it. Take `<head-branch>` from the upstream and use `git rev-parse '@{upstream}'` as `<headRefOid>`.
-- **Local only:** anything else, including a branch that was never pushed. Skip the head fetch, both `<headRefOid>` log checks, and the `lease` ref, and stop after step 5.
+- **Force-push allowed:** the branch's upstream is neither the base nor the default branch, and the user confirms force-pushing to it. Take `<head-remote>` and `<head-branch>` from the upstream and use `git rev-parse '@{upstream}'` as `<headRefOid>`.
+- **Local only:** anything else, including a branch that was never pushed. Skip the head fetch, both `<headRefOid>` log checks, the `lease` ref, and step 6, and use `<base-remote>` for any unshallow fetch.
 
 Fetch, then check what you are about to rewrite. The `echo` checks stay silent unless they apply:
 
@@ -53,27 +53,29 @@ git fetch <base-remote> "+refs/heads/<base>:refs/remotes/<base-remote>/<base>"
 git fetch <head-remote> <head-branch>
 git log --oneline <headRefOid>..HEAD    # local commits the PR does not have
 git log --oneline HEAD..<headRefOid>    # PR commits missing locally
-git merge-base --is-ancestor <base-remote>/<base> HEAD && echo "already on the latest base"
+git merge-base --is-ancestor <base-remote>/<base> HEAD && [ -z "$(git log --merges --format=%h <base-remote>/<base>..HEAD)" ] && echo "already on the latest base"
 git rev-parse -q --verify refs/pr-rebase/<branch>/lease >/dev/null && echo "unfinished earlier run"
 git log --format='%an <%ae>' <base-remote>/<base>..HEAD | sort -u
 ```
 
-Check these in order, because a rebase in progress also looks like a detached HEAD:
+Check every row in order, because a rebase in progress also looks like a detached HEAD. Take any jump to a later step only after the whole table:
 
 | Finding | Do this |
 |---|---|
 | A rebase, merge, or cherry-pick already in progress | Ask whether to continue or abort it |
-| An unfinished earlier run | Keep its refs and ask. To resume, go to step 3, or to step 7 if `lease` equals `HEAD`. To discard it, delete only the `lease` ref and continue down this table |
+| An unfinished earlier run | Keep its refs and ask whether to resume it or discard it. To discard it, delete only the `lease` ref |
 | Detached HEAD, the default branch, or a closed or merged PR | Stop. There is nothing safe to rewrite |
 | Uncommitted changes to tracked files | Ask whether to commit, stash, or stop. Never rebase over them |
 | Only the PR has commits the other side lacks | Stop and ask. Rewriting would discard someone's work |
 | Both log checks list commits (diverged) | Stop and ask. If the user confirms it is their own unpushed rebase, record the baseline below with `<headRefOid>` in place of `HEAD`, then go to step 2 |
 | Only the local branch has extra commits | Ask whether to include them, because step 6 would publish them |
-| Already on the latest base | Do not rebase. Say so, and go to step 7 if CI still needs watching |
+| Already on the latest base, and both log checks are empty | Do not rebase. If CI still needs watching, record the baseline below and go to step 7. Otherwise say so and stop |
 | Commits by other authors | Ask before rewriting them, because their local branches will diverge |
 | Fork PR, or an author you do not trust | Ask before installing or running its code, including lockfile regeneration |
 | Auto-merge is on | Warn that green CI can merge the PR, and ask whether to leave it on |
 | PRs stacked on this branch | Leave them alone and list them in the report |
+
+**If resuming,** ignore the already-on-base row, and ignore the three commit-list rows when `<headRefOid>` equals `lease`, because that difference is this run's own rebase. After the table, go to step 2 if `HEAD` equals `old-tip`, step 7 if it equals `lease`, and step 3 otherwise.
 
 Preview the work:
 
@@ -104,10 +106,10 @@ git update-ref refs/pr-rebase/<branch>/old-base <last-unowned-commit>
 ```bash
 git fetch <base-remote> "+refs/heads/<base>:refs/remotes/<base-remote>/<base>"
 
-# Normal case, and every return to this step:
+# Normal case, and every return after a completed rebase:
 git -c merge.conflictStyle=zdiff3 rebase --no-update-refs <base-remote>/<base>
 
-# Instead, on the first pass only, when the branch carries commits the PR does not own:
+# Instead, until one rebase has completed, when the branch carries commits the PR does not own:
 git -c merge.conflictStyle=zdiff3 rebase --no-update-refs --onto <base-remote>/<base> refs/pr-rebase/<branch>/old-base
 ```
 
@@ -149,7 +151,7 @@ A missing stage means one side added or deleted the file. Use `git log --follow`
 
 ```bash
 git add -- <file>...
-git diff --cached --check   # silent when clean; "leftover conflict marker" means it is not resolved
+git diff --cached --check   # read any output. Trailing spaces and ======= underlines are false alarms, real markers are not
 GIT_EDITOR=true git -c merge.conflictStyle=zdiff3 rebase --continue
 ```
 
