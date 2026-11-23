@@ -9,7 +9,7 @@ metadata:
 
 # Dependabot Review & Merge
 
-Work through open Dependabot PRs one at a time: **review → reason → verify → fix → merge**. Merging is the trivial part. The value is in reasoning about each dependency and each scan report *before* you trust it, handling the lockfile conflicts each merge creates, and leaving `main` green — or being precise about why it isn't.
+Work through open Dependabot PRs one at a time: **review → reason → verify → fix → merge → clean up**. Merging is the trivial part. The value is in reasoning about each dependency and each scan report *before* you trust it, handling the lockfile conflicts each merge creates, and leaving `main` green — or being precise about why it isn't.
 
 ## Core principle
 
@@ -120,19 +120,27 @@ gh pr view <n> --json mergeable,mergeStateStatus
 
 ## 8 — Handle conflicts, rebases, and Dependabot's quirks
 
+Do local work in temporary detached worktrees so the user's checkout and branches stay untouched. Create one directory for the run and put every worktree inside it so §10 can remove them. Keep its path and set `RUN_DIR` again in any new shell, because shell variables may not carry between commands:
+
+```bash
+RUN_DIR="$(mktemp -d "${TMPDIR:-/tmp}/dependabot-review.XXXXXX")"; echo "$RUN_DIR"
+```
+
 When a trailing PR conflicts (almost always **only in the lockfile**), you have three moves:
 
 - **Let Dependabot rebase.** `gh pr comment <n> --body "@dependabot rebase"`. But know its quirks: it may instead **close the PR and open a brand-new one with a new number** (comment: *"these dependencies are updatable in another way, so this is no longer needed"*) — that new PR is the rebased equivalent; diff it against the old to confirm, then merge it. It can also be slow or silently decline. **Don't wait 15+ minutes** for an in-place rebase that may never come.
-- **Resolve locally** (reliable, no force-push). Fetch the PR head, merge `main`, regenerate the lockfile, push:
+- **Resolve locally** (reliable, no force-push). Fetch the PR head into a worktree, merge `main`, regenerate the lockfile, push:
   ```bash
-  gh pr checkout <n>                 # or: git fetch origin refs/pull/<n>/head && git checkout -B fix FETCH_HEAD
+  git fetch origin main
+  git fetch origin "refs/pull/<n>/head"
+  git worktree add --detach "${RUN_DIR:?}/<n>" FETCH_HEAD && cd "$RUN_DIR/<n>"
   git merge origin/main --no-edit    # conflicts, typically just the lockfile
   git checkout origin/main -- <lockfile>
   <package-manager-install-command>            # regenerate against merged manifests
   git add <manifest> <lockfile> && git commit --no-edit
   ```
-  Verify the regenerated lockfile kept **both** sides (spot-check a dep from each PR), run `typecheck` locally, then push (non-force).
-- **Fixing a PR + resolving in one go** (the linter-bump case). Prefer building on **Dependabot's latest rebased head** so its clean lockfile wins: `git checkout -B fix <dependabot-head>` then `git cherry-pick <your-fix-commit>`. Push non-force.
+  Verify the regenerated lockfile kept **both** sides (spot-check a dep from each PR), run `typecheck` locally, then push (non-force) with `git push origin HEAD:refs/heads/<pr-branch>`.
+- **Fixing a PR + resolving in one go** (the linter-bump case). Prefer building on **Dependabot's latest rebased head** so its clean lockfile wins: in the PR's worktree, `git checkout --detach <dependabot-head>` then `git cherry-pick <your-fix-commit>`. Push non-force the same way.
 
 **Pushing to a Dependabot branch:** it's a normal (non-force) push if your local history has the remote head as an ancestor — a merge commit or a cherry-pick on top qualifies. A local **rebase** would need `--force` (avoid unless the user OKs it). Once you push a non-Dependabot commit, Dependabot stops managing that PR — fine, since you're about to merge it. **Watch for Dependabot racing you**: if your push is rejected as non-fast-forward, Dependabot re-pushed; re-fetch its new head and re-apply your fix on top.
 
@@ -151,6 +159,36 @@ After the last merge:
 - **Prove pre-existing vs introduced.** If a job is red, check its history on prior `main` commits (`gh run list --branch main --workflow deploy.yml`). If the **same job failed with the same signature before your batch**, it's pre-existing — say so, and cite the earlier commit. If it started with your merge, it's yours to fix.
 - **Correct yourself.** If you asserted a cause and then read the log and found otherwise, say so plainly. "The deploy failure is the `deployerSa` step" → after reading, "the actual failing job is `e2e`; the deploy step is skipped behind it" is the honest update.
 
+## 10 — Clean up local work
+
+Do this at the end of any run that created a worktree or local branch, including review-only runs and runs that stop early. Leftover worktrees clutter the user's worktree list and can hold gigabytes of dependencies.
+
+Stop anything you started in the run's worktrees. Then, from the checkout you started in, remove every worktree that is clean and whose `HEAD` is on GitHub. The loop lists the rest:
+
+```bash
+case "$RUN_DIR" in
+  */dependabot-review.??????) ;;
+  *) echo "Set RUN_DIR to the directory created in section 8." >&2; false ;;
+esac &&
+find "$RUN_DIR" -mindepth 1 -maxdepth 1 -type d | while IFS= read -r wt; do
+  sha=$(git -C "$wt" rev-parse HEAD) &&
+    [ -z "$(git -C "$wt" status --porcelain)" ] &&
+    gh api "repos/{owner}/{repo}/commits/$sha" --silent </dev/null 2>/dev/null &&
+    git worktree remove "$wt" && continue
+  echo "REVIEW: $wt (HEAD ${sha:-unknown})"
+  git -C "$wt" status --short
+done &&
+rmdir "$RUN_DIR"   # fails harmlessly while anything is left
+```
+
+Decide each `REVIEW` entry:
+
+- **Only generated output** in its status, such as build or cache directories, and `HEAD` on GitHub: `git worktree remove --force <path>`.
+- **A throwaway experiment from this run** whose result is already in your report, such as a test merge across PRs: remove it the same way and name its `HEAD` SHA in the report, which keeps a discarded commit recoverable until Git garbage-collects it.
+- **Anything else**, such as a fix that never reached GitHub or changes you cannot account for: keep it, and tell the user what it holds and the command that removes it.
+
+Delete any local branch this run created once its tip is on GitHub or it was a throwaway from this run, using `git branch -D <branch>` because squash merges make `-d` refuse. Never remove the user's checkout, or a worktree or branch that existed before this run.
+
 ## Guardrails
 
 - **Merging to `main` is significant and semi-irreversible.** Proceed on the user's explicit "merge them" (this workflow is that authorization), but don't invent scope — merge the dependency PRs, not unrelated open work.
@@ -159,4 +197,4 @@ After the last merge:
 
 ## Output
 
-While working, keep the user oriented with a compact per-PR table: **PR # · what · risk · CI · scanner verdict**. At the end, deliver: what merged (and in what order), the one or two issues you found and how you fixed them, the per-PR supply-chain reasoning (especially any flagged package and why it was safe or not), how conflicts were handled, and the honest final `main` state (which workflows/jobs are green, which are red and whether that's pre-existing). Lead with the correction if you revised an earlier claim.
+While working, keep the user oriented with a compact per-PR table: **PR # · what · risk · CI · scanner verdict**. At the end, deliver: what merged (and in what order), the one or two issues you found and how you fixed them, the per-PR supply-chain reasoning (especially any flagged package and why it was safe or not), how conflicts were handled, and the honest final `main` state (which workflows/jobs are green, which are red and whether that's pre-existing), and any local worktree or branch you kept and why. Lead with the correction if you revised an earlier claim.
