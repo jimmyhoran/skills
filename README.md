@@ -132,9 +132,9 @@ See the current [`gh skill` manual](https://cli.github.com/manual/gh_skill) befo
 **Promise:** Work through a batch of Dependabot PRs with dependency reasoning, CI and supply-chain evidence, conflict-aware ordering, and an honest final state.
 
 - **Try:** `Review and merge the open Dependabot PRs. Read the Socket reports, fix legitimate failures, and keep main green.`
-- **Expected output:** A per-PR table covering change, risk, CI, and scanner verdict, followed by merge order, fixes, conflict handling, and the final status of each relevant workflow.
+- **Expected output:** A per-PR table covering change, risk, CI, and scanner verdict, followed by merge order, fixes, conflict handling, the final status of each relevant workflow, and any temporary worktree or branch it kept and why.
 - **Needs:** A local Git checkout; an authenticated [`gh`](https://cli.github.com/) session with access to the repository, pull requests, and Actions logs; and the repository's package manager and test toolchain. Socket or review-bot evidence is used only when that integration exists. No companion skill is required.
-- **External writes:** This is an execution workflow. When the user explicitly asks it to merge, it may comment on PRs, push non-force fixes, merge and delete branches, and thereby trigger deployments. Review-only requests do not authorize those writes.
+- **External writes:** This is an execution workflow. When the user explicitly asks it to merge, it may comment on PRs, push non-force fixes, merge and delete branches, and thereby trigger deployments. Review-only requests do not authorize those writes. Locally, it removes only the temporary worktrees and branches that the run created.
 - **Support:** Installable; repository checks validate its package, but its authenticated, repository-specific behavior is not covered by an automated end-to-end test.
 
 #### [worktree-cleanup](./skills/worktree-cleanup/SKILL.md)
