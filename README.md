@@ -147,6 +147,16 @@ See the current [`gh skill` manual](https://cli.github.com/manual/gh_skill) befo
 - **External writes:** Invoking it authorizes three things: updating or closing tracker items whose work it verified as merged, stopping shells and dev servers the worktree owns, and removing the worktree once nothing is unresolved (running the repository's Orca archive hook when Orca manages it). It commits, pushes, merges, closes a PR, discards changes, deletes an unmerged branch, creates follow-up issues, or stops another agent only when the user picks that option.
 - **Support:** Installable; repository checks validate its package. Its command syntax was checked against the Orca 1.4 and fp 0.24 CLI references in November 2026, but no automated end-to-end test covers a real teardown.
 
+#### [pr-rebase](./skills/pr-rebase/SKILL.md)
+
+**Promise:** Rebase a branch or PR onto its base, resolve every conflict by understanding both sides, and prove the result still does what the original PR did before and after force-pushing.
+
+- **Try:** `Use pr-rebase to rebase this PR onto main and get CI green.`
+- **Expected output:** A rebased branch with CI watched to a final state, plus a report covering each conflict (both intents, the resolution, and how it was verified), changed or dropped commits, review findings, risk-by-risk verification against the original PR, anything still unverified, and the pre-rebase SHA for rollback.
+- **Needs:** A local checkout with Git 2.44 or newer, bash or zsh, an authenticated [`gh`](https://cli.github.com/) session with push access to the PR's head branch, and the repository's own build, test, and run tooling. It uses Claude Code's `/code-review` when available and otherwise reviews the diff itself. No companion skill is required.
+- **External writes:** Invoking it authorizes a force-push to that PR's head branch with an exact lease, pushing fixes for failures the rebase caused, and rerunning a failed CI job once. A local-only request stops before pushing, a dry run changes nothing, and a branch with no PR stays local unless the user confirms a remote branch. Overwriting commits it does not have, rewriting another author's commits, running a fork's code, merging, changing the base, rebasing stacked PRs, or bypassing a hook or required check happens only when the user picks that option.
+- **Support:** Installable; repository checks validate its package. Its Git commands were exercised in local fixture repositories with Git 2.54 and its `gh` commands checked against gh 2.95 in November 2026, but no automated end-to-end test covers a real PR, CI run, or `/code-review`.
+
 ### Understand and grow distribution
 
 #### [funnel-teardown](./skills/funnel-teardown/SKILL.md)
